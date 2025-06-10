@@ -1,9 +1,9 @@
 import { Link, useParams } from "react-router";
 import { useEffectOnce, useLocalStorage } from "react-use";
 import { contactDetail } from "../../lib/api/contact-api";
-import { alertError } from "../../lib/alert";
+import { alertConfirm, alertError, alertSuccess } from "../../lib/alert";
 import { useState } from "react";
-import { addressList } from "../../lib/api/address-api";
+import { addressDelete, addressList } from "../../lib/api/address-api";
 
 export default function ConctactDetail() {
   const [token, _] = useLocalStorage("token", "");
@@ -18,6 +18,12 @@ export default function ConctactDetail() {
 
     const responseBody = await response.json();
 
+    if (response.status >= 500) {
+      await navigate({
+        pathname: "/server-error",
+      });
+    }
+
     if (response.status == 200) {
       setAddresses(responseBody.data);
     } else {
@@ -30,10 +36,43 @@ export default function ConctactDetail() {
 
     const responseBody = await response.json();
 
+    if (response.status >= 500) {
+      await navigate({
+        pathname: "/server-error",
+      });
+    }
+
     if (response.status == 200) {
       setContact(responseBody.data);
     } else {
       alertError(responseBody.errors);
+    }
+  };
+
+  const handleDeleteAddress = async (addressId) => {
+    const confirmed = await alertConfirm(
+      "This addresss will be permanently deleted"
+    );
+
+    if (!confirmed) {
+      return;
+    } else {
+      const response = await addressDelete(token, id, addressId);
+
+      const responseBody = await response.json();
+
+      if (response.status >= 500) {
+        await navigate({
+          pathname: "/server-error",
+        });
+      }
+
+      if (response.status == 200) {
+        alertSuccess("Address delete is succesfully");
+        fetchAdresses();
+      } else {
+        alertError(responseBody.errors);
+      }
     }
   };
 
@@ -126,7 +165,10 @@ export default function ConctactDetail() {
               </div>
 
               {addresses.map((address) => (
-                <div key={address.id} className="bg-gray-700 bg-opacity-50 p-5 rounded-lg shadow-md border border-gray-600 card-hover">
+                <div
+                  key={address.id}
+                  className="bg-gray-700 bg-opacity-50 p-5 rounded-lg shadow-md border border-gray-600 card-hover"
+                >
                   <div className="flex items-center mb-3">
                     <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mr-3 shadow-md">
                       <i className="fas fa-home text-white" />
@@ -169,30 +211,31 @@ export default function ConctactDetail() {
                     >
                       <i className="fas fa-edit mr-2" /> Edit
                     </Link>
-                    <button className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 font-medium shadow-md flex items-center">
+                    <button
+                      onClick={() => handleDeleteAddress(address.id)}
+                      className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 font-medium shadow-md flex items-center"
+                    >
                       <i className="fas fa-trash-alt mr-2" /> Delete
                     </button>
                   </div>
                 </div>
               ))}
-              {/* Address Card 1 */}
-              {/* Address Card 2 */}
             </div>
           </div>
           {/* Action Buttons */}
           <div className="flex justify-end space-x-4">
             <Link
-              to={`/dashboard/contacts/:${id}`}
+              to="/dashboard/contacts"
               className="px-5 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 flex items-center shadow-md"
             >
               <i className="fas fa-arrow-left mr-2" /> Back
             </Link>
-            <a
-              to="edit_contact.html"
+            <Link
+              to={`/dashboard/contacts/${id}/edit`}
               className="px-5 py-3 bg-gradient text-white rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 font-medium shadow-lg transform hover:-translate-y-0.5 flex items-center"
             >
               <i className="fas fa-user-edit mr-2" /> Edit Contact
-            </a>
+            </Link>
           </div>
           {/* Footer */}
           <div className="mt-10 text-center text-gray-400 text-sm animate-fade-in">

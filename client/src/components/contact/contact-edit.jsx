@@ -31,6 +31,12 @@ export default function ContactEdit() {
 
     const responseBody = await response.json();
 
+    if (response.status >= 500) {
+      await navigate({
+        pathname: "/server-error",
+      });
+    }
+
     if (response.status == 200) {
       const { first_name, last_name, email, phone } = responseBody.data;
       setFormData({
@@ -56,6 +62,12 @@ export default function ContactEdit() {
     });
 
     const responseBody = await response.json();
+
+    if (response.status >= 500) {
+      await navigate({
+        pathname: "/server-error",
+      });
+    }
 
     if (response.status == 200) {
       await alertSuccess("update contact is succesfully");

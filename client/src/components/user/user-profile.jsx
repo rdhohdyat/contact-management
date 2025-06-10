@@ -33,12 +33,10 @@ export default function Profile() {
     const response = await userDetail(token);
     const responseBody = await response.json();
 
-    console.log(responseBody);
-
     if (response.status == 200) {
       setName(responseBody.data.name);
     } else {
-      alertError(response.body.errors);
+      alertError(responseBody.errors);
     }
   }
 
@@ -123,7 +121,7 @@ export default function Profile() {
                     name="name"
                     className="w-full pl-10 pr-3 py-3 bg-gray-700 bg-opacity-50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                     placeholder="Enter your full name"
-                    value={name}
+                    defaultValue={name}
                     onChange={(e) => setName(e.target.value)}
                     required
                   />
@@ -169,7 +167,6 @@ export default function Profile() {
                     name="newPassword"
                     className="w-full pl-10 pr-3 py-3 bg-gray-700 bg-opacity-50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                     placeholder="Enter your new password"
-                    value={formUpdatePassword.newPassword}
                     onChange={handleChange}
                     required
                   />
@@ -192,7 +189,6 @@ export default function Profile() {
                     name="confirmPassword"
                     className="w-full pl-10 pr-3 py-3 bg-gray-700 bg-opacity-50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                     placeholder="Confirm your new password"
-                    value={formUpdatePassword.confirmPassword}
                     onChange={handleChange}
                     required
                   />

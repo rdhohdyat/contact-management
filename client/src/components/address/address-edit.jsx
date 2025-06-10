@@ -1,12 +1,23 @@
-import { useParams } from "react-router";
-import { useLocalStorage } from "react-use";
-import { addressDetail } from "../../lib/api/address-api";
+import { Link, useNavigate, useParams } from "react-router";
+import { useEffectOnce, useLocalStorage } from "react-use";
+import { addressDetail, addressUpdate } from "../../lib/api/address-api";
 import { useState } from "react";
+import { contactDetail } from "../../lib/api/contact-api";
+import { alertError, alertSuccess } from "../../lib/alert";
 
 export default function AddressEdit() {
   const [token, _] = useLocalStorage("token", "");
 
   const { id, id_address } = useParams();
+
+  const navigate = useNavigate();
+
+  const [contact, setContact] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+  });
 
   const [formData, setFormData] = useState({
     street: "",
@@ -16,13 +27,58 @@ export default function AddressEdit() {
     postal_code: "",
   });
 
-  const fetchAddress = async () => {
-    const response = await addressDetail(token, id, id_address);
+  const handleChange = (e) => {
+    const { value, name } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const { street, province, city, country, postal_code } = formData;
+
+    const response = await addressUpdate(token, id, id_address, {
+      street,
+      province,
+      city,
+      country,
+      postal_code,
+    });
+
     const responseBody = await response.json();
 
+    if (response.status >= 500) {
+      navigate({
+        pathname: "server-error",
+      });
+    }
+
     if (response.status == 200) {
-      const { street, province, city, country, postal_code } =
-        responseBody.data;
+      await alertSuccess("Update address is succesfully");
+      navigate({
+        pathname: `/dashboard/contacts/${id}`,
+      });
+    } else {
+      await alertError(responseBody.errors);
+    }
+  };
+
+  const fetchAddress = async () => {
+    const response = await addressDetail(token, id, id_address);
+    const { data } = await response.json();
+
+    if (response.status >= 500) {
+      await navigate({
+        pathname: "/server-error",
+      });
+    }
+
+    if (response.status == 200) {
+      const { street, province, city, country, postal_code } = data;
 
       setFormData({
         street,
@@ -34,15 +90,43 @@ export default function AddressEdit() {
     }
   };
 
+  const fetchContactDetail = async () => {
+    const response = await contactDetail(token, id);
+
+    const { data } = await response.json();
+
+    if (response.status >= 500) {
+      await navigate({
+        pathname: "/server-error",
+      });
+    }
+
+    if (response.status == 200) {
+      const { first_name, last_name, email, phone } = data;
+
+      setContact({
+        first_name,
+        last_name,
+        email,
+        phone,
+      });
+    }
+  };
+
+  useEffectOnce(() => {
+    fetchAddress();
+    fetchContactDetail();
+  });
+
   return (
     <>
       <div className="flex items-center mb-6">
-        <a
-          href="detail_contact.html"
+        <Link
+          to={`/dashboard/contacts/${id}`}
           className="text-blue-400 hover:text-blue-300 mr-4 flex items-center transition-colors duration-200"
         >
           <i className="fas fa-arrow-left mr-2" /> Back to Contact Details
-        </a>
+        </Link>
         <h1 className="text-2xl font-bold text-white flex items-center">
           <i className="fas fa-map-marker-alt text-blue-400 mr-3" /> Edit
           Address
@@ -57,14 +141,16 @@ export default function AddressEdit() {
                 <i className="fas fa-user text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-white">John Doe</h2>
+                <h2 className="text-xl font-semibold text-white">
+                  {contact.first_name} {contact.last_name}
+                </h2>
                 <p className="text-gray-300 text-sm">
-                  john.doe@example.com • +1 (555) 123-4567
+                  {contact.email} • {contact.phone}
                 </p>
               </div>
             </div>
           </div>
-          <form>
+          <form onSubmit={handleSubmit}>
             <div className="mb-5">
               <label
                 htmlFor="street"
@@ -82,7 +168,8 @@ export default function AddressEdit() {
                   name="street"
                   className="w-full pl-10 pr-3 py-3 bg-gray-700 bg-opacity-50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                   placeholder="Enter street address"
-                  defaultValue="123 Main St"
+                  value={formData.street}
+                  onChange={handleChange}
                   required
                 />
               </div>
@@ -105,7 +192,8 @@ export default function AddressEdit() {
                     name="city"
                     className="w-full pl-10 pr-3 py-3 bg-gray-700 bg-opacity-50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                     placeholder="Enter city"
-                    defaultValue="New York"
+                    value={formData.city}
+                    onChange={handleChange}
                     required
                   />
                 </div>
@@ -127,7 +215,8 @@ export default function AddressEdit() {
                     name="province"
                     className="w-full pl-10 pr-3 py-3 bg-gray-700 bg-opacity-50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                     placeholder="Enter province or state"
-                    defaultValue="NY"
+                    value={formData.province}
+                    onChange={handleChange}
                     required
                   />
                 </div>
@@ -151,7 +240,8 @@ export default function AddressEdit() {
                     name="country"
                     className="w-full pl-10 pr-3 py-3 bg-gray-700 bg-opacity-50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                     placeholder="Enter country"
-                    defaultValue="USA"
+                    value={formData.country}
+                    onChange={handleChange}
                     required
                   />
                 </div>
@@ -173,19 +263,20 @@ export default function AddressEdit() {
                     name="postal_code"
                     className="w-full pl-10 pr-3 py-3 bg-gray-700 bg-opacity-50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                     placeholder="Enter postal code"
-                    defaultValue={10001}
+                    value={formData.postal_code}
+                    onChange={handleChange}
                     required
                   />
                 </div>
               </div>
             </div>
             <div className="flex justify-end space-x-4">
-              <a
-                href="detail_contact.html"
+              <Link
+                to={`/dashboard/contacts/${id}`}
                 className="px-5 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 flex items-center shadow-md"
               >
                 <i className="fas fa-times mr-2" /> Cancel
-              </a>
+              </Link>
               <button
                 type="submit"
                 className="px-5 py-3 bg-gradient text-white rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 font-medium shadow-lg transform hover:-translate-y-0.5 flex items-center"

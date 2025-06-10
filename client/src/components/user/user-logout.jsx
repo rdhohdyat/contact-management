@@ -12,6 +12,12 @@ export default function Logout() {
     const response = await userLogout(token);
     const responseBody = await response.json();
 
+    if (response.status >= 500) {
+      await navigate({
+        pathname: "/server-error",
+      });
+    }
+
     if (response.status == 200) {
       setToken("");
 

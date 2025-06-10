@@ -1,3 +1,5 @@
+import { Link } from "react-router";
+
 export default function ServerError() {
   return (
     <main className="container mx-auto px-4">
@@ -15,12 +17,12 @@ export default function ServerError() {
               Sorry, something went wrong on our servers. We're working to fix
               the issue.
             </p>
-            <a
-              href="dashboard.html"
+            <Link
+              to="/dashboard/contacts"
               className="inline-flex items-center px-6 py-3 bg-gradient text-white rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 font-medium shadow-lg transform hover:-translate-y-0.5"
             >
               <i className="fas fa-home mr-2" /> Back to Dashboard
-            </a>
+            </Link>
           </div>
         </div>
       </div>

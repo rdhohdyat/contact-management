@@ -5,6 +5,8 @@ import { alertError } from "../../lib/alert";
 import { useLocalStorage } from "react-use";
 
 export default function Login() {
+  const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -25,26 +27,45 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
-    const { username, password } = formData;
+    try {
+      const { username, password } = formData;
 
-    const response = await userLogin({
-      username,
-      password,
-    });
-
-    const responBody = await response.json();
-
-    if (response.status == 200) {
-      // get response and save token to localstorage
-      const token = responBody.data.token;
-      setToken(token);
-
-      await navigate({
-        pathname: "/dashboard/contacts",
+      const response = await userLogin({
+        username,
+        password,
       });
-    } else {
-      await alertError(responBody.errors);
+
+      await new Promise((resolve) => {
+        setTimeout(() => {
+          resolve();
+        }, 1500);
+      });
+
+      const responBody = await response.json();
+
+      if (response.status >= 500) {
+        await navigate({
+          pathname: "/server-error",
+        });
+        return;
+      }
+
+      if (response.status === 200) {
+        const token = responBody.data.token;
+        setToken(token);
+
+        await navigate({
+          pathname: "/dashboard/contacts",
+        });
+      } else {
+        await alertError(responBody.errors);
+      }
+    } catch (error) {
+      await alertError("Terjadi kesalahan saat login. Silakan coba lagi.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,6 +98,7 @@ export default function Login() {
               placeholder="Enter your username"
               value={formData.username}
               onChange={handleChange}
+              disabled={loading}
               required
             />
           </div>
@@ -100,20 +122,30 @@ export default function Login() {
               placeholder="Enter your password"
               value={formData.password}
               onChange={handleChange}
+              disabled={loading}
               required
             />
           </div>
         </div>
         <div className="mb-6">
           <button
+            disabled={loading}
             type="submit"
-            className="w-full bg-gradient text-white py-3 px-4 rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 font-medium shadow-lg transform hover:-translate-y-0.5"
+            className="w-full bg-gradient disabled:opacity-60 text-white py-3 px-4 rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 font-medium shadow-lg transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:opacity-60"
           >
-            <i className="fas fa-sign-in-alt mr-2" /> Sign In
+            {loading ? (
+              <>
+                <i className="fas fa-spinner fa-spin mr-2" /> Please wait...
+              </>
+            ) : (
+              <>
+                <i className="fas fa-sign-in-alt mr-2" /> Sign In
+              </>
+            )}
           </button>
         </div>
         <div className="text-center text-sm text-gray-400">
-          Don't have an account?
+          Don't have an account?{" "}
           <Link
             to="/register"
             className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-200"

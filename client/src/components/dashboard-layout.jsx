@@ -1,6 +1,51 @@
-import { Link, Outlet } from "react-router";
+import { useEffect } from "react";
+import { Link, Outlet, useNavigate } from "react-router";
+import { useLocalStorage } from "react-use";
+import { alertConfirm, alertError, alertSuccess } from "../lib/alert";
+import { userLogout } from "../lib/api/user-api";
 
 export default function DashboardLayout() {
+  const [token, setToken] = useLocalStorage("token", "");
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!token) {
+      alertError("Log into your account to continue");
+      navigate({
+        pathname: "/login",
+      });
+    }
+  }, []);
+
+  const handleLogout = async () => {
+    const confirmed = await alertConfirm("Logout from your account?");
+
+    if (!confirmed) {
+      return;
+    } else {
+      const response = await userLogout(token);
+      const responseBody = await response.json();
+
+      if (response.status >= 500) {
+        await navigate({
+          pathname: "/server-error",
+        });
+      }
+
+      if (response.status == 200) {
+        await alertSuccess("Success logout from your account");
+        setToken("");
+
+        await navigate({
+          pathname: "/login",
+        });
+      } else {
+        await alertError(responseBody.errors);
+      }
+    }
+  };
+
   return (
     <div className="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen flex flex-col">
       <header className="bg-gradient shadow-lg">
@@ -26,13 +71,13 @@ export default function DashboardLayout() {
                 </Link>
               </li>
               <li>
-                <Link
-                  to="/dashboard/users/logout"
-                  className="text-gray-100 hover:text-white flex items-center transition-colors duration-200"
+                <button
+                  onClick={handleLogout}
+                  className="cursor-pointer text-gray-100 hover:text-white flex items-center transition-colors duration-200"
                 >
                   <i className="fas fa-sign-out-alt mr-2" />
                   <span>Logout</span>
-                </Link>
+                </button>
               </li>
             </ul>
           </nav>

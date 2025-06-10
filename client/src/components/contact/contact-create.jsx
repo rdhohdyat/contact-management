@@ -39,6 +39,12 @@ export default function ContactCreate() {
 
     const responseBody = await response.json();
 
+      if (response.status >= 500) {
+      await navigate({
+        pathname: "/server-error",
+      });
+    }
+
     if (response.status == 200) {
       await alertSuccess("Contact created is succesfully");
 

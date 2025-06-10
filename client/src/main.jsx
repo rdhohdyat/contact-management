@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router";
 import "./index.css";
 
 // layout
-import Layout from "./components/Layout";
+import Layout from "./components/layout";
 import DashboardLayout from "./components/dashboard-layout";
 
 // user page
@@ -20,7 +20,7 @@ import ContactList from "./components/contact/contact-list";
 import ConctactDetail from "./components/contact/contact-detail";
 
 // state
-import Navigate from "./components/navigate";
+
 import NotFound from "./components/error/404";
 import ServerError from "./components/error/5xx";
 import AddressCreate from "./components/address/address-create";
@@ -56,9 +56,10 @@ createRoot(document.getElementById("root")).render(
           </Route>
         </Route>
 
-        <Route path="/" element={<Navigate />} />
-        <Route path="/404" element={<NotFound />} />
-        <Route path="/server-error" element={<ServerError />} />
+        <Route element={<Layout />}>
+          <Route path="*" element={<NotFound />} />
+          <Route path="/server-error" element={<ServerError />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   </StrictMode>

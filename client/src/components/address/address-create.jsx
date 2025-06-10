@@ -27,6 +27,12 @@ export default function AddressCreate() {
 
     const responseBody = await response.json();
 
+    if (response.status >= 500) {
+      await navigate({
+        pathname: "/server-error",
+      });
+    }
+
     if (response.status == 200) {
       setContact(responseBody.data);
     } else {
@@ -53,10 +59,16 @@ export default function AddressCreate() {
       city,
       province,
       country,
-      postal_code
+      postal_code,
     });
 
     const responseBody = await response.json();
+
+    if (response.status >= 500) {
+      await navigate({
+        pathname: "/server-error",
+      });
+    }
 
     if (response.status == 200) {
       alertSuccess("Created address is succesfully");

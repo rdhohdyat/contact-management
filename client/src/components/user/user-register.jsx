@@ -4,6 +4,8 @@ import { userRegister } from "../../lib/api/user-api";
 import { Link, useNavigate } from "react-router";
 
 export default function Register() {
+  const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     name: "",
     username: "",
@@ -24,30 +26,49 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { name, username, password, confirmPassword } = formData;
+    setLoading(true);
 
-    if (password !== confirmPassword) {
-      await alertError("Password don't match");
-      return;
-    }
+    try {
+      const { name, username, password, confirmPassword } = formData;
 
-    const response = await userRegister({
-      username: username,
-      password: password,
-      name: name,
-    });
+      if (password !== confirmPassword) {
+        await alertError("Password don't match");
+        return;
+      }
 
-    const responBody = await response.json();
-    console.log(responBody);
-
-    if (response.status == 200) {
-      await alertSuccess("User created succesfully");
-
-      navigate({
-        pathname: "/login",
+      const response = await userRegister({
+        username: username,
+        password: password,
+        name: name,
       });
-    } else {
-      await alertError(responBody.errors);
+
+      await new Promise((resolve) => {
+        setTimeout(() => {
+          resolve();
+        }, 1500);
+      });
+
+      const responBody = await response.json();
+
+      if (response.status >= 500) {
+        await navigate({
+          pathname: "/server-error",
+        });
+      }
+
+      if (response.status == 200) {
+        await alertSuccess("User created succesfully");
+
+        navigate({
+          pathname: "/login",
+        });
+      } else {
+        await alertError(responBody.errors);
+      }
+    } catch (error) {
+      await alertError("Terjadi kesalahan saat daftar. Silakan coba lagi.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -161,19 +182,28 @@ export default function Register() {
         <div className="mb-6">
           <button
             type="submit"
-            className="w-full bg-gradient text-white py-3 px-4 rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 font-medium shadow-lg transform hover:-translate-y-0.5"
+            disabled={loading}
+            className="w-full bg-gradient disabled:opa text-white py-3 px-4 rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 font-medium shadow-lg transform hover:-translate-y-0.5"
           >
-            <i className="fas fa-user-plus mr-2"></i> Register
+            {loading ? (
+              <>
+                <i className="fas fa-spinner fa-spin mr-2" /> Please wait...
+              </>
+            ) : (
+              <>
+                <i className="fas fa-user-plus mr-2"></i> Register
+              </>
+            )}
           </button>
         </div>
 
         <div className="text-center text-sm text-gray-400">
-          Already have an account?
+          Already have an account?{" "}  
           <Link
             to="/login"
             className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-200"
           >
-            Sign in
+             Sign in
           </Link>
         </div>
       </form>

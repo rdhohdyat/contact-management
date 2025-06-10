@@ -86,6 +86,12 @@ export default function ContactList() {
 
       const responseBody = await response.json();
 
+      if (response.status >= 500) {
+        await navigate({
+          pathname: "/server-error",
+        });
+      }
+
       if (response.status == 200) {
         alertSuccess("Contact delete is successfully");
         fetchContactList();
